@@ -1,0 +1,37 @@
+# Archivos de Docker
+*.log
+
+# Directorios de volúmenes de Docker (si se crean localmente)
+pg-master-data/
+pg-replica-data/
+pgadmin-data/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Archivos de configuración local
+.env
+*.local
+
+# Archivos de pgAdmin
+pgadmin/
+servers.json

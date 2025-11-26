@@ -1,0 +1,146 @@
+version: '3.8'
+
+services:
+  # ============================================
+  # SERVICIO 1: PostgreSQL Master (Escritura)
+  # ============================================
+  pg-master:
+    image: postgres:15-alpine
+    container_name: pg-master
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: root_password
+      POSTGRES_DB: crypto_db
+    volumes:
+      # Persistencia de datos
+      - pg-master-data:/var/lib/postgresql/data
+      # Scripts de inicialización
+      - ./master/init-master.sh:/docker-entrypoint-initdb.d/init-master.sh
+      # Configuración personalizada
+      - ./master/postgresql.conf:/etc/postgresql/postgresql.conf
+      - ./master/pg_hba.conf:/etc/postgresql/pg_hba.conf
+    command: >
+      postgres
+      -c config_file=/etc/postgresql/postgresql.conf
+      -c hba_file=/etc/postgresql/pg_hba.conf
+    networks:
+      distribuidos-net:
+        ipv4_address: 172.20.0.10
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d crypto_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================
+  # SERVICIO 2: PostgreSQL Replica (Lectura)
+  # ============================================
+  pg-replica:
+    image: postgres:15-alpine
+    container_name: pg-replica
+    restart: unless-stopped
+    depends_on:
+      pg-master:
+        condition: service_healthy
+    environment:
+      # Variables para replicación
+      MASTER_HOST: 172.20.0.10
+      MASTER_PORT: 5432
+      MASTER_USER: replicator
+      MASTER_PASSWORD: repl_password_2024
+      MASTER_DB_USER: admin
+      MASTER_DB_PASSWORD: root_password
+      PGDATA: /var/lib/postgresql/data
+    entrypoint: ["/bin/bash", "/entrypoint.sh"]
+    volumes:
+      - pg-replica-data:/var/lib/postgresql/data
+      # Script de replicación
+      - ./replica/entrypoint.sh:/entrypoint.sh
+    networks:
+      distribuidos-net:
+        ipv4_address: 172.20.0.11
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d crypto_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================
+  # SERVICIO 3: pgAdmin (Panel de Control)
+  # ============================================
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin
+    restart: unless-stopped
+    depends_on:
+      - pg-master
+      - pg-replica
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    networks:
+      distribuidos-net:
+        ipv4_address: 172.20.0.5
+    ports:
+      - "5050:80"
+    healthcheck:
+      test: ["CMD", "wget", "-O", "-", "http://localhost:80/misc/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============================================
+  # SERVICIO 4: Backend API (Python FastAPI)
+  # ============================================
+  web-app:
+    image: python:3.11-slim
+    container_name: web-app
+    restart: unless-stopped
+    depends_on:
+      pg-master:
+        condition: service_healthy
+      pg-replica:
+        condition: service_healthy
+    working_dir: /app
+    volumes:
+      - ./web:/app
+    command: tail -f /dev/null
+    networks:
+      distribuidos-net:
+        ipv4_address: 172.20.0.20
+    ports:
+      - "8000:8000"
+      - "8501:8501"
+    environment:
+      - PYTHONUNBUFFERED=1
+
+# ============================================
+# DEFINICIÓN DE VOLÚMENES
+# ============================================
+volumes:
+  pg-master-data:
+    driver: local
+  pg-replica-data:
+    driver: local
+  pgadmin-data:
+    driver: local
+
+# ============================================
+# DEFINICIÓN DE RED PERSONALIZADA
+# ============================================
+networks:
+  distribuidos-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+          gateway: 172.20.0.1

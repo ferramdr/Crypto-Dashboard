@@ -1,0 +1,247 @@
+{
+  "info": {
+    "name": "Crypto Investment Tracker API",
+    "description": "Colección de Postman para testear la API de seguimiento de inversiones en criptomonedas con arquitectura distribuida Master-Slave",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health & Info",
+      "item": [
+        {
+          "name": "API Root - Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8000/",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": [""]
+            },
+            "description": "Obtiene información general de la API y lista de endpoints disponibles"
+          },
+          "response": []
+        },
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8000/health",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["health"]
+            },
+            "description": "Verifica el estado de salud de la API"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints para verificar el estado y obtener información de la API"
+    },
+    {
+      "name": "Investments (WRITE - Master DB)",
+      "item": [
+        {
+          "name": "Create Investment - Bitcoin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"coin\": \"bitcoin\",\n  \"amount\": 0.5\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/invest",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["invest"]
+            },
+            "description": "Crea una nueva inversión en Bitcoin. **ESCRIBE en la base de datos MASTER (172.20.0.10)**"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Investment - Ethereum",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"coin\": \"ethereum\",\n  \"amount\": 2.5\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/invest",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["invest"]
+            },
+            "description": "Crea una nueva inversión en Ethereum. **ESCRIBE en la base de datos MASTER (172.20.0.10)**"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Investment - Cardano",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"coin\": \"cardano\",\n  \"amount\": 1000\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/invest",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["invest"]
+            },
+            "description": "Crea una nueva inversión en Cardano. **ESCRIBE en la base de datos MASTER (172.20.0.10)**"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Investment - Solana",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"coin\": \"solana\",\n  \"amount\": 10\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/invest",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["invest"]
+            },
+            "description": "Crea una nueva inversión en Solana. **ESCRIBE en la base de datos MASTER (172.20.0.10)**"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints para crear inversiones (operaciones de ESCRITURA en Master DB)"
+    },
+    {
+      "name": "Investments (READ - Replica DB)",
+      "item": [
+        {
+          "name": "Get Investment History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8000/history",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["history"]
+            },
+            "description": "Obtiene el historial completo de inversiones. **LEE de la base de datos REPLICA (172.20.0.11)**"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Investment Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8000/stats",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["stats"]
+            },
+            "description": "Obtiene estadísticas agregadas de todas las inversiones. **LEE de la base de datos REPLICA (172.20.0.11)**"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints para consultar inversiones (operaciones de LECTURA desde Replica DB)"
+    },
+    {
+      "name": "Error Cases (Testing)",
+      "item": [
+        {
+          "name": "Invalid Coin Name",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"coin\": \"moneda_inexistente_123\",\n  \"amount\": 1.0\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/invest",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["invest"]
+            },
+            "description": "Prueba de error: intenta crear inversión con una moneda que no existe en CoinGecko. Debe retornar error 404."
+          },
+          "response": []
+        },
+        {
+          "name": "Invalid Amount (Negative)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"coin\": \"bitcoin\",\n  \"amount\": -5.0\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/invest",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["invest"]
+            },
+            "description": "Prueba de error: intenta crear inversión con cantidad negativa. Debe ser rechazado."
+          },
+          "response": []
+        }
+      ],
+      "description": "Casos de prueba para validar el manejo de errores"
+    }
+  ]
+}
