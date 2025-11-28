@@ -16,11 +16,29 @@ done
 
 echo "✅ Master está disponible"
 
-# Verificar si ya existe data (evitar reinicialización)
+# Verificar si ya existe data
 if [ -s "$PGDATA/PG_VERSION" ]; then
-    echo "⚠️  Réplica ya inicializada, iniciando PostgreSQL en modo réplica..."
-    chown -R postgres:postgres $PGDATA 2>/dev/null || true
-    exec gosu postgres postgres
+    echo "📦 Detectados datos existentes de la réplica"
+    
+    # Verificar si los archivos de replicación existen
+    if [ -f "$PGDATA/standby.signal" ]; then
+        echo "✅ Configuración de réplica detectada"
+        echo "🔄 Intentando reiniciar en modo réplica con datos existentes..."
+        
+        # Asegurar permisos correctos
+        chown -R postgres:postgres $PGDATA 2>/dev/null || true
+        chmod 700 $PGDATA
+        
+        # Intentar iniciar PostgreSQL
+        echo "🚀 Iniciando servidor PostgreSQL en modo réplica..."
+        exec gosu postgres postgres
+    else
+        echo "⚠️  No se detectó configuración de réplica (falta standby.signal)"
+        echo "🔄 Re-sincronizando desde el Master..."
+        
+        # Limpiar datos corruptos
+        rm -rf $PGDATA/*
+    fi
 fi
 
 echo "🚀 Realizando backup base desde el Master..."

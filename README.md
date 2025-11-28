@@ -1,28 +1,125 @@
 # Proyecto Sistemas Distribuidos - PostgreSQL Master-Replica
 
-## 📋 Descripción
+## Descripción
 
-Proyecto universitario de Sistemas Distribuidos con arquitectura de replicación PostgreSQL:
+## Cómo Ejecutar el Proyecto
 
-- **pg-master**: PostgreSQL 15 (Servidor maestro para escritura)
-- **pg-replica**: PostgreSQL 15 (Servidor réplica para lectura)
-- **pgadmin**: Panel de administración web
+### Paso 1: Abrir los Contenedores en Docker
 
-## 🌐 Arquitectura de Red
+```powershell
+# Navega al directorio del proyecto
+cd "d:\Ferram\Personal\Crypto Dashboard"
+
+# Levanta todos los contenedores
+docker compose up -d --build
+```
+
+> **Nota**: El proceso puede tardar 30-60 segundos mientras se inicializan los contenedores y se configura la replicación.
+
+### Paso 2: Verificar que los Contenedores Estén Corriendo
+
+```powershell
+docker compose ps
+```
+
+### Paso 3: Instalar Dependencias en el Contenedor Web
+
+```powershell
+# Accede al contenedor web-app
+docker exec -it web-app bash
+
+# Dentro del contenedor, instala las dependencias
+pip install -r requirements.txt
+
+# Sal del contenedor
+exit
+```
+
+### Paso 4: Iniciar el API Backend
+
+```powershell
+# Inicia FastAPI en segundo plano
+docker exec -d web-app uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+### Paso 5: Iniciar el Dashboard Web
+
+```powershell
+# Inicia Streamlit en segundo plano
+docker exec -d web-app streamlit run dashboard.py --server.port 8501 --server.address 0.0.0.0
+```
+
+### Paso 6: Abrir la Aplicación en el Navegador
+
+**Dashboard**: http://localhost:8501
+**API Docs**: http://localhost:8000/docs
+**pgAdmin**: http://localhost:5050
+
+**Credenciales de pgAdmin:**
+
+- Email: `admin@admin.com`
+- Password: `admin`
+
+### Paso 7: Detener y Reiniciar el Proyecto
+
+#### Detener normalmente (MANTIENE los datos)
+
+```powershell
+# Detener todos los contenedores
+docker compose down
+```
+
+Qué hace:
+
+- Detiene todos los contenedores
+- **Mantiene los volúmenes** (tus datos persisten)
+- Al volver a levantar con `docker compose up -d`, continúa desde donde quedó
+
+#### **Reiniciar el proyecto (sin perder datos)**
+
+```powershell
+# Detener
+docker compose down
+
+# Esperar 2-3 segundos
+
+# Levantar nuevamente
+docker compose up -d
+```
+
+**La réplica automáticamente:**
+
+- Verifica si tiene datos válidos
+- Continúa la replicación desde donde quedó
+- Se re-sincroniza solo si es necesario
+
+#### ⚠️ **Reinicio completo (ELIMINA todos los datos)**
+
+Solo usa esto si:
+
+- Tienes problemas de sincronización
+- Quieres empezar desde cero
+- Estás probando cambios en la configuración
+
+```powershell
+# Detener Y eliminar volúmenes
+docker compose down -v
+
+# Levantar nuevamente (empezará desde cero)
+docker compose up -d
+```
+
+❌ **ADVERTENCIA**: Este comando eliminará TODOS los datos de las bases de datos.
+
+---
+
+## Arquitectura de Red
 
 - **Red**: `distribuidos-net` (bridge)
 - **Subred**: `172.20.0.0/16`
 - **Gateway**: `172.20.0.1`
 
-### Asignación de IPs Estáticas:
-
-| Servicio   | IP Estática | Puerto Host | Puerto Contenedor |
-| ---------- | ----------- | ----------- | ----------------- |
-| pg-master  | 172.20.0.10 | 5432        | 5432              |
-| pg-replica | 172.20.0.11 | 5433        | 5432              |
-| pgadmin    | 172.20.0.5  | 5050        | 80                |
-
-## 📁 Estructura del Proyecto
+## Estructura del Proyecto
 
 ```
 Cypto Dashboard/
@@ -39,7 +136,7 @@ Cypto Dashboard/
     └── entrypoint.sh          # Script de replicación automática
 ```
 
-## 🚀 Inicio Rápido
+## Inicio Rápido
 
 ### 1. Levantar los contenedores
 
@@ -129,21 +226,6 @@ docker exec -it pg-replica psql -U admin -d crypto_db -c "SELECT * FROM pg_stat_
 - **User**: `replicator`
 - **Password**: `repl_password_2024`
 
-### pgAdmin:
-
-- **Email**: `admin@admin.com`
-- **Password**: `admin`
-
-## 🛠️ Comandos Útiles
-
-### Ver logs en tiempo real
-
-```powershell
-docker compose logs -f pg-master
-docker compose logs -f pg-replica
-docker compose logs -f pgadmin
-```
-
 ### Verificar estado de contenedores
 
 ```powershell
@@ -156,7 +238,7 @@ docker compose ps
 docker compose down
 ```
 
-### Detener y eliminar volúmenes (⚠️ Elimina todos los datos)
+### Detener y eliminar volúmenes (Elimina todos los datos)
 
 ```powershell
 docker compose down -v
@@ -178,43 +260,12 @@ docker exec -it pg-replica psql -U ferram -d crypto_db
 docker compose restart pg-master
 ```
 
-## ⚠️ Problemas Comunes
+## Conceptos Implementados
 
-### Error: "exec user process caused: no such file or directory"
-
-**Causa**: Los archivos `.sh` tienen saltos de línea de Windows (CRLF) en lugar de Unix (LF).
-
-**Solución**:
-
-1. Abre `replica/entrypoint.sh` en VS Code
-2. En la esquina inferior derecha, haz clic en "CRLF"
-3. Selecciona "LF"
-4. Guarda el archivo
-5. Repite para `master/init-master.sh`
-6. Ejecuta: `docker compose down -v && docker compose up --build`
-
-### Docker no reconocido
-
-**Solución**: Instala Docker Desktop desde https://www.docker.com/products/docker-desktop/
-
-### pgAdmin no carga
-
-**Solución**: Espera 15-20 segundos después de `docker compose up`. pgAdmin tarda en inicializar.
-
-## 📚 Conceptos Implementados
-
-- ✅ **Replicación Streaming**: Sincronización en tiempo real
-- ✅ **Write-Ahead Logging (WAL)**: Mecanismo de replicación de PostgreSQL
-- ✅ **High Availability**: Datos replicados para redundancia
-- ✅ **Read Scaling**: Distribuir lecturas en la réplica
-- ✅ **Hot Standby**: Réplica disponible para consultas de solo lectura
-
-## 📖 Referencias
-
-- [PostgreSQL Replication](https://www.postgresql.org/docs/15/high-availability.html)
-- [Docker Compose](https://docs.docker.com/compose/)
-- [pgAdmin](https://www.pgadmin.org/docs/)
+- **Replicación Streaming**: Sincronización en tiempo real
+- **Write-Ahead Logging (WAL)**: Mecanismo de replicación de PostgreSQL
+- **High Availability**: Datos replicados para redundancia
+- **Read Scaling**: Distribuir lecturas en la réplica
+- **Hot Standby**: Réplica disponible para consultas de solo lectura
 
 ---
-
-**¡Proyecto listo para demostración y presentación universitaria!** 🎓🚀

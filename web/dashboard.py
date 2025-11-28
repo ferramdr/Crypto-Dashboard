@@ -1,30 +1,20 @@
-"""
-🚀 Sistema Distribuido de Cripto-Inversiones
-Dashboard con patrón CQRS y PostgreSQL Master-Slave Replication
-"""
 import streamlit as st
 import requests
 import pandas as pd
 from datetime import datetime
 
-# ============================================
 # CONFIGURACIÓN DE LA PÁGINA
-# ============================================
 st.set_page_config(
     page_title="Sistema Distribuido Crypto",
-    page_icon="🚀",
+    page_icon="",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# ============================================
 # CONFIGURACIÓN DE LA API
-# ============================================
 API_BASE_URL = "http://localhost:8000"
 
-# ============================================
 # ESTILOS CSS PERSONALIZADOS
-# ============================================
 st.markdown("""
 <style>
     .main-header {
@@ -82,27 +72,20 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ============================================
 # CABECERA INFORMATIVA
-# ============================================
-st.markdown('<h1 class="main-header">🚀 Sistema Distribuido de Cripto-Inversiones</h1>', unsafe_allow_html=True)
-st.markdown('<div class="architecture-badge">⚙️ Arquitectura: Master-Slave Replication</div>', unsafe_allow_html=True)
+st.markdown('<h1 class="main-header">Sistema Distribuido de Cripto-Inversiones</h1>', unsafe_allow_html=True)
 st.markdown("---")
 
-# ============================================
 # CONTENIDO PRINCIPAL - DOS COLUMNAS
-# ============================================
 col1, col2 = st.columns([1, 1])
 
-# ============================================
 # PANEL IZQUIERDO - SIMULACIÓN DE ESCRITURA
-# ============================================
 with col1:
-    st.markdown("### ✍️ Simulación de Escritura")
+    st.markdown("### Simulación de Escritura")
     st.markdown('<div class="node-badge-write">🎯 TARGET: NODO MAESTRO (172.20.0.10)</div>', unsafe_allow_html=True)
     
     with st.form("investment_form", clear_on_submit=True):
-        st.markdown("#### 💰 Registrar Inversión")
+        st.markdown("#### Registrar Inversión")
         
         # Lista de criptomonedas populares
         crypto_options = [
@@ -124,13 +107,19 @@ with col1:
         ]
         
         # Select input
-        coin_name = st.selectbox(
+        selected_val = st.selectbox(
             "Selecciona la Criptomoneda",
             options=crypto_options,
             index=0,  # Bitcoin por defecto
             format_func=lambda x: x.upper().replace("-", " ")
         )
         
+        # Corrección robusta: asegurar que tenemos el string
+        if isinstance(selected_val, int):
+            coin_name = crypto_options[selected_val]
+        else:
+            coin_name = selected_val
+            
         amount = st.number_input(
             "Cantidad",
             min_value=0.0001,
@@ -140,10 +129,10 @@ with col1:
         )
         
         # Submit button
-        submit_button = st.form_submit_button("🚀 Registrar Inversión", use_container_width=True, type="primary")
+        submit_button = st.form_submit_button("Registrar Inversión", use_container_width=True, type="primary")
         
         if submit_button:
-            with st.spinner("📤 Enviando a NODO MAESTRO..."):
+            with st.spinner("Enviando a NODO MAESTRO..."):
                 try:
                     # POST request to API
                     response = requests.post(
@@ -183,9 +172,7 @@ with col1:
                 except Exception as e:
                     st.error(f"❌ Error inesperado: {str(e)}")
 
-# ============================================
 # PANEL DERECHO - LECTURA DE LA RÉPLICA
-# ============================================
 with col2:
     st.markdown("### 📖 Lectura de la Réplica")
     st.markdown('<div class="node-badge-read">� Leyendo datos del NODO RÉPLICA (172.20.0.11)</div>', unsafe_allow_html=True)
@@ -241,9 +228,7 @@ with col2:
     except Exception as e:
         st.error(f"❌ Error: {str(e)}")
 
-# ============================================
 # GRÁFICO DE EVOLUCIÓN
-# ============================================
 st.markdown("---")
 st.markdown("## 📈 Evolución del Portafolio")
 
@@ -283,11 +268,9 @@ try:
         else:
             st.info("📊 No hay suficientes datos para mostrar el gráfico. ¡Registra tu primera inversión!")
 except Exception as e:
-    st.warning("⚠️ No se pudo generar el gráfico de evolución")
+    st.warning(f"⚠️ No se pudo generar el gráfico de evolución: {str(e)}")
 
-# ============================================
 # FOOTER
-# ============================================
 st.markdown("---")
 st.markdown(
     """

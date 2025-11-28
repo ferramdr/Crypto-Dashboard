@@ -4,7 +4,7 @@ Implements CQRS pattern: Writes to Master, Reads from Replica
 """
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 from typing import List
 import requests
 from datetime import datetime
@@ -12,28 +12,38 @@ from datetime import datetime
 from database import engine_master, get_db_write, get_db_read
 from models import Base, Investment
 
-# ============================================
-# CREATE TABLES
-# ============================================
+
 # Create all tables in the master database
 Base.metadata.create_all(bind=engine_master)
 
-# ============================================
-# FASTAPI APP INITIALIZATION
-# ============================================
+
 app = FastAPI(
     title="Crypto Investment Tracker",
     description="Sistema de seguimiento de inversiones en criptomonedas con replicación PostgreSQL",
     version="1.0.0"
 )
 
-# ============================================
 # PYDANTIC SCHEMAS
-# ============================================
 class InvestmentCreate(BaseModel):
     """Schema for creating a new investment"""
     coin: str
     amount: float
+
+    @validator('coin')
+    def validate_coin_name(cls, v):
+        """Validate that coin name is not empty"""
+        if not v or not v.strip():
+            raise ValueError('Coin name cannot be empty')
+        return v.strip().lower()
+    
+    @validator('amount')
+    def validate_amount(cls, v):
+        """Validate that amount is positive"""
+        if v <= 0:
+            raise ValueError('Amount must be greater than 0')
+        if v > 1000000:  # Reasonable upper limit
+            raise ValueError('Amount cannot exceed 1,000,000')
+        return v
 
     class Config:
         json_schema_extra = {
@@ -57,9 +67,7 @@ class InvestmentResponse(BaseModel):
         from_attributes = True
 
 
-# ============================================
 # HELPER FUNCTIONS
-# ============================================
 def get_crypto_price(coin_name: str) -> float:
     """
     Fetch current cryptocurrency price from CoinGecko API
