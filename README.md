@@ -93,7 +93,7 @@ docker compose up -d
 - Continúa la replicación desde donde quedó
 - Se re-sincroniza solo si es necesario
 
-#### ⚠️ **Reinicio completo (ELIMINA todos los datos)**
+#### **Reinicio completo (ELIMINA todos los datos)**
 
 Solo usa esto si:
 
@@ -109,7 +109,7 @@ docker compose down -v
 docker compose up -d
 ```
 
-❌ **ADVERTENCIA**: Este comando eliminará TODOS los datos de las bases de datos.
+**ADVERTENCIA**: Este comando eliminará TODOS los datos de las bases de datos.
 
 ---
 
