@@ -2,6 +2,23 @@
 
 ## Descripción
 
+### English
+
+This project demonstrates a PostgreSQL master-replica deployment used by a small Crypto Dashboard application. The repository contains Docker Compose configurations, initialization scripts, and sample code that run a FastAPI backend and a Streamlit dashboard inside containers. The setup automates a streaming replication topology (master -> replica) and provides tools to verify replication, manage the services with Docker Compose, and inspect the databases using pgAdmin.
+
+Key features:
+
+- Automated PostgreSQL master/replica setup using Docker
+- Streaming replication with WAL shipping and hot standby
+- FastAPI backend serving an API (docs at /docs)
+- Streamlit-based dashboard for visualizing crypto data
+- pgAdmin included for database management
+- Scripts and examples to test replication and manage lifecycle
+
+This project is intended for development, testing, and educational purposes to explore high-availability concepts, replication, and read-scaling with a replica. Do NOT use the provided credentials or configuration in production.
+
+---
+
 ## Cómo Ejecutar el Proyecto
 
 ### Paso 1: Abrir los Contenedores en Docker
